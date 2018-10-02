@@ -1,4 +1,3 @@
-// from : http://www.airspayce.com/mikem/arduino/AccelStepper/index.html
 #include <ESP8266WiFi.h>
 
 const char* ssid     = "D-Shop-Bucharest";// YOUR WIFI SSID
