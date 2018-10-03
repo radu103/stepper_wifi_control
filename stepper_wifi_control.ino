@@ -13,8 +13,8 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 #define STEPS_DIVIDER 3
 
 int position = 0;
-int posMin = -200;
-int posMax = 200;
+//int posMin = -200;
+//int posMax = 200;
 
 // Create an instance of the server
 // specify the port to listen on as an argument
@@ -72,6 +72,7 @@ void loop() {
   // Check if a client has connected
   WiFiClient client = server.available();
   if (!client) {
+    blink();
     return;
   }
 
@@ -140,7 +141,7 @@ void loop() {
   if (respMsg.length() > 0){
     s = getResponse("json", respMsg);
   }else{
-    s = getResponse("json", printUsage());
+    s = getResponse("html", printUsage());
   }
 
   // Send the response to the client
@@ -214,6 +215,7 @@ void moveLeft(int steps){
   Serial.println("Moving left : " + String(steps));  
   
   digitalWrite(DIR, HIGH);
+  delayMicroseconds(DELAYSTEP);
 
   int total = steps * STEPS_DIVIDER;
   
@@ -226,9 +228,9 @@ void moveLeft(int steps){
      
      digitalWrite(PULSE, LOW);
      delayMicroseconds(delayT);
+
+     position -= 1;
   }
-  
-  position -= steps;
 }
 
 void moveRight(int steps){
@@ -236,6 +238,7 @@ void moveRight(int steps){
   Serial.println("Moving right : " + String(steps));
 
   digitalWrite(DIR, LOW);
+  delayMicroseconds(DELAYSTEP);
 
   int total = steps * STEPS_DIVIDER;
   
@@ -248,7 +251,7 @@ void moveRight(int steps){
      
      digitalWrite(PULSE, LOW);
      delayMicroseconds(delayT);
+     
+     position += 1;
   }
-  
-  position += steps;
 }
