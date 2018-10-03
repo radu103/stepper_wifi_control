@@ -9,7 +9,7 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 #define DIR D5
 #define PULSE D6
 #define STEPS 200
-#define DELAYSTEP 1
+#define DELAYSTEP 1000  // in micro seconds
 #define STEPS_DIVIDER 3
 
 int position = 0;
@@ -62,6 +62,7 @@ void setup() {
    pinMode(ENABLE, OUTPUT);
    pinMode(DIR, OUTPUT);
    pinMode(PULSE, OUTPUT);
+   
    digitalWrite(PULSE, LOW);
    digitalWrite(ENABLE, HIGH);
 }
@@ -90,7 +91,7 @@ void loop() {
   if (req.indexOf("/left/") != -1) {
     int steps = req.substring(10).toInt();
     moveLeft(steps);
-    respMsg = "LEFT " + String(steps) + " OK";
+    respMsg = String(steps);
     
     Serial.println(req.substring(10));
     Serial.println(String(steps));
@@ -102,7 +103,7 @@ void loop() {
     
     int steps = req.substring(11).toInt();
     moveRight(steps);
-    respMsg = "RIGHT " + String(steps) + " OK";
+    respMsg = String(steps);
     
     Serial.println(req.substring(11));
     Serial.println(String(steps));
@@ -120,48 +121,65 @@ void loop() {
     }
     
     position = 0;
-    respMsg = "GO TO ORIGIN (0)";
+    respMsg = "0";
     
     Serial.println("GO TO ORIGIN (0)");
     blink();
   }
   else
   if (req.indexOf("/position") != -1) {
-    respMsg = "Position " + String(position);
+    respMsg = String(position);
     Serial.println("Position : " + String(position));
     blink();
   }
   
   client.flush();
 
-  // Prepare the response
-  String html = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
-  String json = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n";
-  
   String s = "";
   
-  if (respMsg.length() > 0)
-    s += html + respMsg;
-  else
-    s += html + printUsage();
-   
-  s += "\n";
+  if (respMsg.length() > 0){
+    s = getResponse("json", respMsg);
+  }else{
+    s = getResponse("json", printUsage());
+  }
 
   // Send the response to the client
   client.print(s);
   delay(1);
   
   Serial.println("Client disconnected");
+  blink();
+}
+
+String getResponse(String type, String message){
+  
+  String html = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+  String json = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n";
+
+  String s = "";
+  
+  if(type == "json"){
+    s += json +  "{\"message\":\"" + message + "\"}";
+
+  }else{
+    s += html + message;
+  }
+
+  s += "\n";
+  
+  return s;
 }
 
 String printUsage() {
-  // Prepare the usage response
+  
   String ip = WiFi.localIP().toString();
   String s = "Stepper usage:<br/><br/>\n";
+  
   s += "<a href=\"http://"+ ip + "/origin\">http://"+ ip + "/origin</a><br/>\n";
   s += "<a href=\"http://"+ ip + "/position\">http://"+ ip + "/position</a><br/>\n";
   s += "<a href=\"http://"+ ip + "/left/1\">http://"+ ip + "/left/{steps}</a><br/>\n";
   s += "<a href=\"http://"+ ip + "/right/1\">http://"+ ip + "/right/{steps}</a><br/>\n";
+  
   return(s);
 }
 
@@ -174,19 +192,42 @@ void blink() {
   delay(100);
 }
 
+int getStepDelay(int step, int total){
+  
+  float rap = step / total;
+  
+  int delayT = DELAYSTEP;
+  
+  if(rap < 0.1){
+    delayT = round(DELAYSTEP * 1.5);
+  }else
+  if(rap > 0.9){
+    delayT = round(DELAYSTEP * 1.5);
+  }else
+  if(rap >= 0.2 && rap <= 0.8){
+    delayT = delayT - round(delayT * 0.4);
+  }
+
+  return delayT;
+}
+
 void moveLeft(int steps){
 
   Serial.println("Moving left : " + String(steps));  
   
   digitalWrite(DIR, HIGH);
 
-  for(int i=1; i<=steps * STEPS_DIVIDER; i++){
-    
+  int total = steps * STEPS_DIVIDER;
+  
+  for(int i=1; i <= total; i++){
+
+     int delayT = getStepDelay(i, total);
+     
      digitalWrite(PULSE, HIGH);
-     delay(DELAYSTEP);
+     delayMicroseconds(delayT);
      
      digitalWrite(PULSE, LOW);
-     delay(DELAYSTEP);
+     delayMicroseconds(delayT);
   }
   
   position -= steps;
@@ -198,13 +239,17 @@ void moveRight(int steps){
 
   digitalWrite(DIR, LOW);
 
-  for(int i=1; i<=steps * STEPS_DIVIDER; i++){
+  int total = steps * STEPS_DIVIDER;
+
+  for(int i=1; i<= total; i++){
+
+     int delayT = getStepDelay(i, total);
     
      digitalWrite(PULSE, HIGH);
-     delay(DELAYSTEP);
+     delayMicroseconds(delayT);
      
      digitalWrite(PULSE, LOW);
-     delay(DELAYSTEP);
+     delayMicroseconds(delayT);
   }
   
   position += steps;
