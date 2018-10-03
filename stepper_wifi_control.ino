@@ -1,15 +1,22 @@
 #include <ESP8266WiFi.h>
 
+// wifi config
 const char* ssid     = "D-Shop-Bucharest";// YOUR WIFI SSID
 const char* password = "dshopbuh";        // YOUR WIFI PASSWORD 
 #define DELAY 1                           // Delay to allow Wifi to work
 
+// config specific to motor controller
+#define NAME "Body"
+#define MINSTEPS 0
+#define MAXSTEPS 4400
+
+// stepper motor config
 #define LED 0
 #define ENABLE D0
 #define DIR D5
 #define PULSE D6
 #define STEPS 200
-#define DELAYSTEP 1000  // in micro seconds
+#define DELAYSTEP 500  // in micro seconds
 #define STEPS_DIVIDER 3
 
 int position = 0;
@@ -65,7 +72,7 @@ void setup() {
    pinMode(PULSE, OUTPUT);
    
    digitalWrite(PULSE, LOW);
-   digitalWrite(ENABLE, HIGH);
+   digitalWrite(ENABLE, LOW);
 }
 
 void loop() {
@@ -134,6 +141,13 @@ void loop() {
     Serial.println("Position : " + String(position));
     blink();
   }
+  else
+  if (req.indexOf("/reset") != -1) {
+    respMsg = String(position);
+    Serial.println("Reset requested!");
+    blink();
+    ESP.restart();
+  }
   
   client.flush();
 
@@ -161,10 +175,10 @@ String getResponse(String type, String message){
   String s = "";
   
   if(type == "json"){
-    s += json +  "{\"message\":\"" + message + "\"}";
+    s += json +  "{\"name\":\"" + NAME + "\",\"message\":\"" + message + "\"}";
 
   }else{
-    s += html + message;
+    s += html + NAME + "<br/>\r\n" + message;
   }
   
   return s;
@@ -184,9 +198,6 @@ String printUsage() {
 }
 
 void blink(int delayMs) {
-  
-  digitalWrite(LED, LOW);
-  delay(delayMs);
   
   digitalWrite(LED, HIGH);
   delay(1000);
@@ -225,16 +236,28 @@ int getStepDelay(int step, int total){
 
 void moveLeft(int steps){
 
+  if(position - steps < MINSTEPS){
+    Serial.println("Moving left : OUT OF RANGE"); 
+    return;
+  }
+
   Serial.println("Moving left : " + String(steps));  
+
+  digitalWrite(ENABLE, HIGH);
+  delayMicroseconds(DELAYSTEP);
   
   digitalWrite(DIR, HIGH);
   delayMicroseconds(DELAYSTEP);
 
   int total = steps * STEPS_DIVIDER;
+  int i=1;
+  int delayT = DELAYSTEP;
   
-  for(int i=1; i <= total; i++){
+  for(i=1; i <= total; i++){
 
-     int delayT = getStepDelay(i, total);
+     if(i % 10 == 0){
+        delayT = getStepDelay(i, total);
+     }
      
      digitalWrite(PULSE, HIGH);
      delayMicroseconds(delayT);
@@ -242,29 +265,49 @@ void moveLeft(int steps){
      digitalWrite(PULSE, LOW);
      delayMicroseconds(delayT);
 
-     position -= 1;
+     yield();
   }
+
+  position -= steps;
+
+  digitalWrite(ENABLE, LOW);
 }
 
 void moveRight(int steps){
 
+  if(position + steps > MAXSTEPS){
+    Serial.println("Moving right : OUT OF RANGE"); 
+    return;
+  }
+
   Serial.println("Moving right : " + String(steps));
+
+  digitalWrite(ENABLE, HIGH);
+  delayMicroseconds(DELAYSTEP);
 
   digitalWrite(DIR, LOW);
   delayMicroseconds(DELAYSTEP);
 
   int total = steps * STEPS_DIVIDER;
+  int i=1;
+  int delayT = DELAYSTEP;
   
-  for(int i=1; i<= total; i++){
+  for(i=1; i<= total; i++){
 
-     int delayT = getStepDelay(i, total);
+     if(i % 10 == 0){
+        delayT = getStepDelay(i, total);
+     }
     
      digitalWrite(PULSE, HIGH);
      delayMicroseconds(delayT);
      
      digitalWrite(PULSE, LOW);
      delayMicroseconds(delayT);
-     
-     position += 1;
+
+     yield();
   }
+
+  position -= steps;
+
+  digitalWrite(ENABLE, LOW);
 }
