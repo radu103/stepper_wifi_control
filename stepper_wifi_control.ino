@@ -40,6 +40,7 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
+    blink(3000);
   }
   
   Serial.println("");
@@ -180,6 +181,18 @@ String printUsage() {
   s += "<a href=\"http://"+ ip + "/right/1\">http://"+ ip + "/right/{steps}</a><br/>\n";
   
   return(s);
+}
+
+void blink(int delayMs) {
+  
+  digitalWrite(LED, LOW);
+  delay(delayMs);
+  
+  digitalWrite(LED, HIGH);
+  delay(1000);
+
+  digitalWrite(LED, LOW);
+  delay(delayMs);
 }
 
 void blink() {
