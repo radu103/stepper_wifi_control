@@ -193,7 +193,6 @@ void blink() {
 int getStepDelay(int step, int total){
  
   int delayT = DELAYSTEP;
-  return delayT;
   
   float rap = step / total;
     
@@ -239,7 +238,7 @@ void moveRight(int steps){
   digitalWrite(DIR, LOW);
 
   int total = steps * STEPS_DIVIDER;
-
+  
   for(int i=1; i<= total; i++){
 
      int delayT = getStepDelay(i, total);
