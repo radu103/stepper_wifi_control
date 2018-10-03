@@ -153,8 +153,8 @@ void loop() {
 
 String getResponse(String type, String message){
   
-  String html = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
-  String json = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n";
+  String html = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nAccess-Control-Allow-Origin:*\r\n\r\n";
+  String json = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin:*\r\n\r\n";
 
   String s = "";
   
@@ -164,8 +164,6 @@ String getResponse(String type, String message){
   }else{
     s += html + message;
   }
-
-  s += "\n";
   
   return s;
 }
@@ -193,11 +191,12 @@ void blink() {
 }
 
 int getStepDelay(int step, int total){
+ 
+  int delayT = DELAYSTEP;
+  return delayT;
   
   float rap = step / total;
-  
-  int delayT = DELAYSTEP;
-  
+    
   if(rap < 0.1){
     delayT = round(DELAYSTEP * 1.5);
   }else
