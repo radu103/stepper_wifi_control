@@ -19,12 +19,8 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 #define DELAYSTEP 500  // in micro seconds
 #define STEPS_DIVIDER 3
 
+// running vars
 int position = 0;
-//int posMin = -200;
-//int posMax = 200;
-
-// Create an instance of the server
-// specify the port to listen on as an argument
 WiFiServer server(80);
 
 void setup() {
@@ -99,8 +95,8 @@ void loop() {
   // Match the request 
   if (req.indexOf("/left/") != -1) {
     int steps = req.substring(10).toInt();
-    moveLeft(steps);
-    respMsg = String(steps);
+    int res = moveLeft(steps);
+    respMsg = String(res);
     
     Serial.println(req.substring(10));
     Serial.println(String(steps));
@@ -111,8 +107,8 @@ void loop() {
   if (req.indexOf("/right/") != -1) {
     
     int steps = req.substring(11).toInt();
-    moveRight(steps);
-    respMsg = String(steps);
+    int res = moveRight(steps);
+    respMsg = String(res);
     
     Serial.println(req.substring(11));
     Serial.println(String(steps));
@@ -234,11 +230,11 @@ int getStepDelay(int step, int total){
   return delayT;
 }
 
-void moveLeft(int steps){
+int moveLeft(int steps){
 
   if(position - steps < MINSTEPS){
     Serial.println("Moving left : OUT OF RANGE"); 
-    return;
+    return(0);
   }
 
   Serial.println("Moving left : " + String(steps));  
@@ -271,13 +267,15 @@ void moveLeft(int steps){
   position -= steps;
 
   digitalWrite(ENABLE, LOW);
+
+  return steps;
 }
 
-void moveRight(int steps){
+int moveRight(int steps){
 
   if(position + steps > MAXSTEPS){
     Serial.println("Moving right : OUT OF RANGE"); 
-    return;
+    return(0);
   }
 
   Serial.println("Moving right : " + String(steps));
@@ -310,4 +308,6 @@ void moveRight(int steps){
   position -= steps;
 
   digitalWrite(ENABLE, LOW);
+
+  return steps;
 }
