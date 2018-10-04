@@ -256,7 +256,7 @@ int moveLeft(int steps){
   delayMicroseconds(DELAYSTEP);
   
   digitalWrite(DIR, HIGH);
-  delayMicroseconds(DELAYSTEP);
+  delayMicroseconds(DELAYSTEP * 2);
 
   int total = steps * STEPS_DIVIDER;
   int i=1;
@@ -297,7 +297,7 @@ int moveRight(int steps){
   delayMicroseconds(DELAYSTEP);
 
   digitalWrite(DIR, LOW);
-  delayMicroseconds(DELAYSTEP);
+  delayMicroseconds(DELAYSTEP * 2);
 
   int total = steps * STEPS_DIVIDER;
   int i=1;
