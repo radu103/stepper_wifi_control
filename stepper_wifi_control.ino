@@ -6,9 +6,15 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 #define DELAY 1                           // Delay to allow Wifi to work
 
 // config specific to motor controller
-#define NAME "Body"
-#define MINSTEPS 0
-#define MAXSTEPS 4400
+#define NAME "Base"
+#define MINSTEPS -181
+#define MAXSTEPS 181
+#define STEPS_DIVIDER 3
+
+//#define NAME "Body"
+//#define MINSTEPS 0
+//#define MAXSTEPS 13201
+//#define STEPS_DIVIDER 1
 
 // stepper motor config
 #define LED 0
@@ -17,7 +23,6 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 #define PULSE D6
 #define STEPS 200
 #define DELAYSTEP 500  // in micro seconds
-#define STEPS_DIVIDER 3
 
 // running vars
 int position = 0;
@@ -35,7 +40,9 @@ void setup() {
   // Connect to WiFi network
   Serial.println();
   Serial.println();
-  Serial.print("STEPPER: Connecting to ");
+  
+  Serial.print(NAME);
+  Serial.print(" : Connecting to ");
   Serial.println(ssid);
   
   WiFi.begin(ssid, password);
@@ -47,13 +54,19 @@ void setup() {
   }
   
   Serial.println("");
-  Serial.println("WiFi connected");
+  
+  Serial.print(NAME);
+  Serial.println(" : WiFi connected");
   
   // Start the server
   server.begin();
-  Serial.println("Server started");
+
+  Serial.print(NAME);
+  Serial.println(" : Server started");
 
   // Print the IP address
+  Serial.print(NAME);
+  Serial.print(" IP : ");
   Serial.println(WiFi.localIP());
 
   // Blink onboard LED to signify its connected
@@ -305,7 +318,7 @@ int moveRight(int steps){
      yield();
   }
 
-  position -= steps;
+  position += steps;
 
   digitalWrite(ENABLE, LOW);
 
