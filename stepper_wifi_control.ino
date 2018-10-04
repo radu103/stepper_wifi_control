@@ -3,18 +3,17 @@
 // wifi config
 const char* ssid     = "D-Shop-Bucharest";// YOUR WIFI SSID
 const char* password = "dshopbuh";        // YOUR WIFI PASSWORD 
-#define DELAY 1                           // Delay to allow Wifi to work
 
 // config specific to motor controller
-#define NAME "Base"
-#define MINSTEPS -181
-#define MAXSTEPS 181
-#define STEPS_DIVIDER 3
+//#define NAME "Base"
+//#define MINSTEPS -181
+//#define MAXSTEPS 181
+//#define STEPS_DIVIDER 3
 
-//#define NAME "Body"
-//#define MINSTEPS 0
-//#define MAXSTEPS 13201
-//#define STEPS_DIVIDER 1
+#define NAME "Body"
+#define MINSTEPS 0
+#define MAXSTEPS 13201
+#define STEPS_DIVIDER 1
 
 // stepper motor config
 #define LED 0
@@ -28,6 +27,7 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 int position = 0;
 WiFiServer server(80);
 
+// init function
 void setup() {
   
   Serial.begin(115200);
@@ -36,6 +36,10 @@ void setup() {
   // prepare onboard LED
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
+
+  String vers = ESP.getCoreVersion();
+  Serial.print("ESP version : ");
+  Serial.println(vers);
 
   // Connect to WiFi network
   Serial.println();
@@ -75,13 +79,13 @@ void setup() {
   blink();
   blink();
 
-   // Motor Config
-   pinMode(ENABLE, OUTPUT);
-   pinMode(DIR, OUTPUT);
-   pinMode(PULSE, OUTPUT);
-   
-   digitalWrite(PULSE, LOW);
-   digitalWrite(ENABLE, LOW);
+  // Motor Config
+  pinMode(ENABLE, OUTPUT);
+  pinMode(DIR, OUTPUT);
+  pinMode(PULSE, OUTPUT);
+  
+  digitalWrite(PULSE, LOW);
+  digitalWrite(ENABLE, LOW);
 }
 
 void loop() {
@@ -104,32 +108,42 @@ void loop() {
   String req = client.readStringUntil('\r');
   Serial.println(req);
   client.flush();
+
+  yield();
+
+  boolean isGET = req.indexOf("GET") >= 0;
+  Serial.println(req); 
   
-  // Match the request 
-  if (req.indexOf("/left/") != -1) {
-    int steps = req.substring(10).toInt();
-    int res = moveLeft(steps);
-    respMsg = String(res);
+  // Match the request
+  if (isGET && req.indexOf("/left/") != -1) {
     
-    Serial.println(req.substring(10));
-    Serial.println(String(steps));
+    String auxL = req.substring(10);
+    String leftString = auxL.substring(0, auxL.indexOf(" "));
+    int stepsL = leftString.toInt();
+    
+    int resL = moveLeft(stepsL);
+    respMsg = String(resL);
+    
+    Serial.println(String(stepsL));
     
     blink();
   } 
-  else 
-  if (req.indexOf("/right/") != -1) {
+  else
+  if (isGET && req.indexOf("/right/") != -1) {
+
+    String auxR = req.substring(11);
+    String rightString = auxR.substring(0, auxR.indexOf(" "));
+    int stepsR = rightString.toInt();
     
-    int steps = req.substring(11).toInt();
-    int res = moveRight(steps);
-    respMsg = String(res);
+    int resR = moveRight(stepsR);
+    respMsg = String(resR);
     
-    Serial.println(req.substring(11));
-    Serial.println(String(steps));
+    Serial.println(String(stepsR));
     
     blink();
   }
   else
-  if (req.indexOf("/origin") != -1) {
+  if (isGET && req.indexOf("/origin") != -1) {
 
     if(position > 0){
       moveLeft(position);
@@ -145,20 +159,36 @@ void loop() {
     blink();
   }
   else
-  if (req.indexOf("/position") != -1) {
+  if (isGET && req.indexOf("/position") != -1) {
     respMsg = String(position);
     Serial.println("Position : " + String(position));
     blink();
   }
   else
-  if (req.indexOf("/reset") != -1) {
+  if (isGET && req.indexOf("/reset") != -1) {
     respMsg = String(position);
     Serial.println("Reset requested!");
     blink();
     ESP.restart();
   }
+  else
+  if (isGET && req.indexOf("/enable") != -1) {
+    respMsg = "true";
+    Serial.println("Stepper Driver enabled");
+    digitalWrite(ENABLE, LOW);
+    blink();
+  }
+  else
+  if (isGET && req.indexOf("/disable") != -1) {
+    respMsg = "false";
+    Serial.println("Stepper Driver disabled");
+    digitalWrite(ENABLE, HIGH);
+    blink();
+  }
   
   client.flush();
+
+  yield();
 
   String s = "";
   
@@ -209,7 +239,7 @@ String printUsage() {
 void blink(int delayMs) {
   
   digitalWrite(LED, HIGH);
-  delay(1000);
+  delay(delayMs / 2);
 
   digitalWrite(LED, LOW);
   delay(delayMs);
@@ -250,13 +280,10 @@ int moveLeft(int steps){
     return(0);
   }
 
-  Serial.println("Moving left : " + String(steps));  
-
-  digitalWrite(ENABLE, HIGH);
-  delayMicroseconds(DELAYSTEP);
+  Serial.println("Moving left : " + String(steps));
   
-  digitalWrite(DIR, HIGH);
-  delayMicroseconds(DELAYSTEP * 2);
+  digitalWrite(DIR, LOW);
+  delayMicroseconds(DELAYSTEP);
 
   int total = steps * STEPS_DIVIDER;
   int i=1;
@@ -267,19 +294,19 @@ int moveLeft(int steps){
      if(i % 10 == 0){
         delayT = getStepDelay(i, total);
      }
-     
-     digitalWrite(PULSE, HIGH);
-     delayMicroseconds(delayT);
+
+     digitalWrite(DIR, LOW);
      
      digitalWrite(PULSE, LOW);
+     delayMicroseconds(delayT);
+     
+     digitalWrite(PULSE, HIGH);
      delayMicroseconds(delayT);
 
      yield();
   }
 
   position -= steps;
-
-  digitalWrite(ENABLE, LOW);
 
   return steps;
 }
@@ -293,11 +320,8 @@ int moveRight(int steps){
 
   Serial.println("Moving right : " + String(steps));
 
-  digitalWrite(ENABLE, HIGH);
+  digitalWrite(DIR, HIGH);
   delayMicroseconds(DELAYSTEP);
-
-  digitalWrite(DIR, LOW);
-  delayMicroseconds(DELAYSTEP * 2);
 
   int total = steps * STEPS_DIVIDER;
   int i=1;
@@ -308,19 +332,19 @@ int moveRight(int steps){
      if(i % 10 == 0){
         delayT = getStepDelay(i, total);
      }
+
+     digitalWrite(DIR, HIGH);
     
-     digitalWrite(PULSE, HIGH);
+     digitalWrite(PULSE, LOW);
      delayMicroseconds(delayT);
      
-     digitalWrite(PULSE, LOW);
+     digitalWrite(PULSE, HIGH);
      delayMicroseconds(delayT);
 
      yield();
   }
 
   position += steps;
-
-  digitalWrite(ENABLE, LOW);
 
   return steps;
 }
