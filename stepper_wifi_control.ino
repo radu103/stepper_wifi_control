@@ -20,8 +20,9 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 #define ENABLE D0
 #define DIR D5
 #define PULSE D6
-#define STEPS 200
+#define STEPSPERCIRCLE 200
 #define DELAYSTEP 500  // in micro seconds
+#define MINDELAYSTEP 20  // in micro seconds
 
 // running vars
 int position = 0;
@@ -257,18 +258,48 @@ void blink() {
 int getStepDelay(int step, int total){
  
   int delayT = DELAYSTEP;
-  
-  float rap = step / total;
-    
-  if(rap < 0.1){
-    delayT = round(DELAYSTEP * 1.5);
-  }else
-  if(rap > 0.9){
-    delayT = round(DELAYSTEP * 1.5);
-  }else
-  if(rap >= 0.2 && rap <= 0.8){
-    delayT = delayT - round(delayT * 0.4);
+
+  if(total - step >= STEPSPERCIRCLE){
+    delayT = MINDELAYSTEP;
   }
+  else  
+  if(step < STEPSPERCIRCLE){
+    delayT = DELAYSTEP * 2;
+  }
+  else
+  if(step < STEPSPERCIRCLE / 2){
+    delayT = DELAYSTEP * 4;
+  }
+  else
+  if(step < STEPSPERCIRCLE / 4){
+    delayT = DELAYSTEP * 8;
+  }  
+  else
+  if(step < STEPSPERCIRCLE / 8){
+    delayT = DELAYSTEP * 16;
+  }    
+  if(step < STEPSPERCIRCLE / 16){
+    delayT = DELAYSTEP * 32;
+  }
+  else  
+  if(total - step < STEPSPERCIRCLE){
+    delayT = DELAYSTEP * 2;
+  }
+  else
+  if(total - step < STEPSPERCIRCLE / 2){
+    delayT = DELAYSTEP * 4;
+  }
+  else
+  if(total - step < STEPSPERCIRCLE / 4){
+    delayT = DELAYSTEP * 8;
+  }  
+  else
+  if(total - step < STEPSPERCIRCLE / 8){
+    delayT = DELAYSTEP * 16;
+  }    
+  if(total - step < STEPSPERCIRCLE / 16){
+    delayT = DELAYSTEP * 32;
+  }  
 
   return delayT;
 }
@@ -291,7 +322,7 @@ int moveLeft(int steps){
   
   for(i=1; i <= total; i++){
 
-     if(i % 10 == 0){
+     if(i % 2 == 0){
         delayT = getStepDelay(i, total);
      }
 
@@ -329,7 +360,7 @@ int moveRight(int steps){
   
   for(i=1; i<= total; i++){
 
-     if(i % 10 == 0){
+     if(i % 2 == 0){
         delayT = getStepDelay(i, total);
      }
 
