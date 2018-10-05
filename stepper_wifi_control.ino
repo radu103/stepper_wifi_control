@@ -21,8 +21,8 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 #define DIR D5
 #define PULSE D6
 #define STEPSPERCIRCLE 200
-#define DELAYSTEP 500  // in micro seconds
-#define MINDELAYSTEP 20  // in micro seconds
+#define DELAYSTEP 1000  // in micro seconds
+#define MINDELAYSTEP 1000  // in micro seconds
 
 // running vars
 int position = 0;
@@ -272,14 +272,14 @@ int getStepDelay(int step, int total){
   }
   else
   if(step < STEPSPERCIRCLE / 4){
-    delayT = DELAYSTEP * 8;
+    delayT = DELAYSTEP * 6;
   }  
   else
   if(step < STEPSPERCIRCLE / 8){
-    delayT = DELAYSTEP * 16;
+    delayT = DELAYSTEP * 8;
   }    
   if(step < STEPSPERCIRCLE / 16){
-    delayT = DELAYSTEP * 32;
+    delayT = DELAYSTEP * 10;
   }
   else  
   if(total - step < STEPSPERCIRCLE){
@@ -291,14 +291,14 @@ int getStepDelay(int step, int total){
   }
   else
   if(total - step < STEPSPERCIRCLE / 4){
-    delayT = DELAYSTEP * 8;
+    delayT = DELAYSTEP * 6;
   }  
   else
   if(total - step < STEPSPERCIRCLE / 8){
-    delayT = DELAYSTEP * 16;
+    delayT = DELAYSTEP * 8;
   }    
   if(total - step < STEPSPERCIRCLE / 16){
-    delayT = DELAYSTEP * 32;
+    delayT = DELAYSTEP * 10;
   }  
 
   return delayT;
