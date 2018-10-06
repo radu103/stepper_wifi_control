@@ -213,9 +213,14 @@ String handleDriverDisable(){
 }
 
 String handleGetAngle(){
+
+    char angleStr[5];
+    dtostrf(angle, 5, 2, angleStr);
   
-    String respMsg = String(angle);
-    Serial.println("Position : " + String(position));
+    String respMsg = angleStr;
+
+    Serial.println("Angle : ");
+    Serial.println(angleStr);    
     blink();
 
     return respMsg;
@@ -453,7 +458,8 @@ int moveLeft(int steps){
   }
 
   position -= steps;
-
+  angle = round(position * 360.00 * 100 / STEPSPERCIRCLE) / 100;  // rounded to decimals 
+  
   return steps;
 }
 
@@ -491,6 +497,7 @@ int moveRight(int steps){
   }
 
   position += steps;
+  angle = round(position * 360.00 * 100 / STEPSPERCIRCLE) / 100;  // rounded to decimals 
 
   return steps;
 }
