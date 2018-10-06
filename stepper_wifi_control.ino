@@ -26,6 +26,7 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 
 // running vars
 int position = 0;
+float angle = 0;
 WiFiServer server(80);
 
 // init function
@@ -98,7 +99,7 @@ void loop() {
     return;
   }
 
-  String respMsg = "";    // HTTP Response Message
+  String respMsg = "";
   
   // Wait until the client sends some data
   while(!client.available()){
@@ -117,74 +118,53 @@ void loop() {
   
   // Match the request
   if (isGET && req.indexOf("/left/") != -1) {
-    
-    String auxL = req.substring(10);
-    String leftString = auxL.substring(0, auxL.indexOf(" "));
-    int stepsL = leftString.toInt();
-    
-    int resL = moveLeft(stepsL);
-    respMsg = String(resL);
-    
-    Serial.println(String(stepsL));
-    
-    blink();
+    respMsg = handleMoveStepsLeft(req);
   } 
   else
   if (isGET && req.indexOf("/right/") != -1) {
-
-    String auxR = req.substring(11);
-    String rightString = auxR.substring(0, auxR.indexOf(" "));
-    int stepsR = rightString.toInt();
-    
-    int resR = moveRight(stepsR);
-    respMsg = String(resR);
-    
-    Serial.println(String(stepsR));
-    
-    blink();
+    respMsg = handleMoveStepsRight(req);
   }
   else
-  if (isGET && req.indexOf("/origin") != -1) {
-
-    if(position > 0){
-      moveLeft(position);
-    }
-    else{
-      moveRight(-1 * position);
-    }
-    
-    position = 0;
-    respMsg = "0";
-    
-    Serial.println("GO TO ORIGIN (0)");
-    blink();
+  if (isGET && req.indexOf("/origin/set") != -1) {
+    respMsg = handleSetOrigin();
+  }
+  else  
+  if (isGET && req.indexOf("/origin/go") != -1) {
+    respMsg = handleGoToOrigin();
   }
   else
+  if (isGET && req.indexOf("/position/get") != -1) {
+    respMsg = handleGetPosition();
+  }
+  else
+  if (isGET && req.indexOf("/position/set") != -1) {
+   respMsg =  handleSetPosition(req);
+  }
+  else    
   if (isGET && req.indexOf("/position") != -1) {
-    respMsg = String(position);
-    Serial.println("Position : " + String(position));
-    blink();
+    respMsg = handleGetPosition();
+  }
+  if (isGET && req.indexOf("/angle/get") != -1) {
+    respMsg = handleGetAngle();
   }
   else
-  if (isGET && req.indexOf("/reset") != -1) {
-    respMsg = String(position);
-    Serial.println("Reset requested!");
-    blink();
-    ESP.restart();
+  if (isGET && req.indexOf("/angle/set") != -1) {
+   respMsg =  handleSetAngle(req);
+  }
+  else    
+  if (isGET && req.indexOf("/angle") != -1) {
+    respMsg = handleGetAngle();
   }
   else
   if (isGET && req.indexOf("/enable") != -1) {
-    respMsg = "true";
-    Serial.println("Stepper Driver enabled");
-    digitalWrite(ENABLE, LOW);
-    blink();
+    respMsg = handleDriverEnable();
   }
   else
   if (isGET && req.indexOf("/disable") != -1) {
-    respMsg = "false";
-    Serial.println("Stepper Driver disabled");
-    digitalWrite(ENABLE, HIGH);
-    blink();
+    respMsg = handleDriverDisable();
+  }  
+  if (isGET && req.indexOf("/reset") != -1) {
+    handleSoftReset();
   }
   
   client.flush();
@@ -193,9 +173,12 @@ void loop() {
 
   String s = "";
   
-  if (respMsg.length() > 0){
+  if (respMsg.length() > 0)
+  {
     s = getResponse("json", respMsg);
-  }else{
+  }
+  else
+  {
     s = getResponse("html", printUsage());
   }
 
@@ -203,8 +186,140 @@ void loop() {
   client.print(s);
   delay(1);
   
-  Serial.println("Client disconnected");
+  Serial.println("client disconnected");
   blink();
+}
+
+void handleSoftReset(){
+    Serial.println("Reset requested!");
+    blink();
+    ESP.restart();
+}
+
+String handleDriverEnable(){
+    String respMsg = "true";
+    Serial.println("Stepper Driver enabled");
+    digitalWrite(ENABLE, LOW);
+    blink();
+    return respMsg;
+}
+
+String handleDriverDisable(){
+    String respMsg = "false";
+    Serial.println("Stepper Driver disabled");
+    digitalWrite(ENABLE, HIGH);
+    blink();
+    return respMsg;
+}
+
+String handleGetAngle(){
+  
+    String respMsg = String(angle);
+    Serial.println("Position : " + String(position));
+    blink();
+
+    return respMsg;
+}
+
+String handleSetAngle(String req){
+    String respMsg = "NOT IMPLEMENTED";
+    Serial.println("NOT IMPLEMENTED : handleSetAngle");
+    blink();
+
+    return respMsg;
+}
+
+String handleGetPosition(){
+  
+    String respMsg = String(position);
+    Serial.println("Position : " + String(position));
+    blink();
+
+    return respMsg;
+}
+
+String handleSetPosition(String req){
+
+    String auxP = req.substring(19);
+    String posString = auxP.substring(0, auxP.indexOf(" "));
+    int pos = posString.toInt();
+    
+    int resP = 0;
+    if(pos > position){
+      resP = moveRight(position - pos);
+    }
+    else
+    {
+      resP = moveLeft(pos - position);
+    }
+    
+    String respMsg = String(resP);
+    
+    Serial.println(String(resP));
+    
+    blink();
+
+    return respMsg;
+}
+
+String handleSetOrigin(){
+    position = 0;
+    String respMsg = "0";
+    
+    Serial.println("ORIGIN SET HERE (0)");
+    blink();
+
+    return respMsg;
+}
+
+String handleGoToOrigin(){
+  
+    if(position > 0){
+      moveLeft(position);
+    }
+    else{
+      moveRight(-1 * position);
+    }
+    
+    position = 0;
+    String respMsg = "0";
+    
+    Serial.println("GO TO ORIGIN (0)");
+    blink();
+
+    return respMsg;
+}
+
+String handleMoveStepsLeft(String req){
+    
+    String auxL = req.substring(10);
+    String leftString = auxL.substring(0, auxL.indexOf(" "));
+    int stepsL = leftString.toInt();
+    
+    int resL = moveLeft(stepsL);
+    String respMsg = String(resL);
+    
+    Serial.println(String(stepsL));
+    
+    blink();
+
+    return respMsg;
+}
+
+String handleMoveStepsRight(String req){
+  
+    String auxR = req.substring(11);
+    String rightString = auxR.substring(0, auxR.indexOf(" "));
+    int stepsR = rightString.toInt();
+    
+    int resR = moveRight(stepsR);
+    String respMsg = String(resR);
+    
+    Serial.println(String(stepsR));
+    
+    blink();
+
+    return respMsg;
 }
 
 String getResponse(String type, String message){
