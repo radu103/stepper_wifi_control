@@ -14,6 +14,9 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 //#define MINSTEPS 0
 //#define MAXSTEPS 13201
 //#define STEPS_DIVIDER 1
+//#define DELAYSTEP 1000  // in micro seconds
+//#define MINDELAYSTEP 1000  // in micro seconds
+//#define USEPROGRESSIVESPEED true
 
 // stepper motor config
 #define LED 0
