@@ -5,15 +5,15 @@ const char* ssid     = "D-Shop-Bucharest";// YOUR WIFI SSID
 const char* password = "dshopbuh";        // YOUR WIFI PASSWORD 
 
 // config specific to motor controller
-//#define NAME "Base"
-//#define MINSTEPS -181
-//#define MAXSTEPS 181
-//#define STEPS_DIVIDER 3
+#define NAME "Base"
+#define MINSTEPS -181
+#define MAXSTEPS 181
+#define STEPS_DIVIDER 3
 
-#define NAME "Body"
-#define MINSTEPS 0
-#define MAXSTEPS 13201
-#define STEPS_DIVIDER 1
+//#define NAME "Body"
+//#define MINSTEPS 0
+//#define MAXSTEPS 13201
+//#define STEPS_DIVIDER 1
 
 // stepper motor config
 #define LED 0
@@ -21,8 +21,9 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 #define DIR D5
 #define PULSE D6
 #define STEPSPERCIRCLE 200
-#define DELAYSTEP 1000  // in micro seconds
-#define MINDELAYSTEP 1000  // in micro seconds
+#define DELAYSTEP 5000  // in micro seconds
+#define MINDELAYSTEP 5000  // in micro seconds
+#define USEPROGRESSIVESPEED false
 
 // running vars
 int position = 0;
@@ -378,6 +379,10 @@ void blink() {
 int getStepDelay(int step, int total){
  
   int delayT = DELAYSTEP;
+
+  if(USEPROGRESSIVESPEED == false){
+    return delayT;
+  }
 
   if(total - step >= STEPSPERCIRCLE){
     delayT = MINDELAYSTEP;
