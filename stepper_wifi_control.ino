@@ -14,9 +14,6 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 //#define MINSTEPS 0
 //#define MAXSTEPS 13201
 //#define STEPS_DIVIDER 1
-//#define DELAYSTEP 1000  // in micro seconds
-//#define MINDELAYSTEP 1000  // in micro seconds
-//#define USEPROGRESSIVESPEED true
 
 // stepper motor config
 #define LED 0
@@ -24,11 +21,12 @@ const char* password = "dshopbuh";        // YOUR WIFI PASSWORD
 #define DIR D5
 #define PULSE D6
 #define STEPSPERCIRCLE 200
-#define DELAYSTEP 5000  // in micro seconds
-#define MINDELAYSTEP 5000  // in micro seconds
-#define USEPROGRESSIVESPEED false
 
 // running vars
+int delaystep = 5000;
+int mindelaystep = 5000;
+boolean useprogressivespeed = false;
+
 int position = 0;
 float angle = 0;
 WiFiServer server(80);
@@ -121,6 +119,30 @@ void loop() {
   Serial.println(req); 
   
   // Match the request
+  if (isGET && req.indexOf("/progressivespeed/get") != -1) {
+    respMsg = handleProgressiveSpeedGet();
+  } 
+  else
+  if (isGET && req.indexOf("/progressivespeed/set") != -1) {
+    respMsg = handleProgressiveSpeedSet(req);
+  } 
+  else
+  if (isGET && req.indexOf("/delay/get") != -1) {
+    respMsg = handleDelayGet();
+  } 
+  else
+  if (isGET && req.indexOf("/delay/set") != -1) {
+    respMsg = handleDelaySet(req);
+  } 
+  else
+  if (isGET && req.indexOf("/mindelay/get") != -1) {
+    respMsg = handleMinDelayGet();
+  } 
+  else
+  if (isGET && req.indexOf("/mindelay/set") != -1) {
+    respMsg = handleMinDelaySet(req);
+  } 
+  else
   if (isGET && req.indexOf("/left/") != -1) {
     respMsg = handleMoveStepsLeft(req);
   } 
@@ -233,6 +255,93 @@ String handleGetAngle(){
 String handleSetAngle(String req){
     String respMsg = "NOT IMPLEMENTED";
     Serial.println("NOT IMPLEMENTED : handleSetAngle");
+    blink();
+
+    return respMsg;
+}
+
+String handleDelayGet(){
+  
+  String respMsg = String(delaystep);
+  Serial.println("delaystep : " + respMsg);
+  blink();
+
+  return respMsg;
+}
+
+String handleDelaySet(String req){
+  
+    String auxD = req.substring(19); // to do : check
+    String posString = auxD.substring(0, auxD.indexOf(" "));
+    int delayT = posString.toInt();
+
+    delaystep = delayT;
+
+    String respMsg = String(delayT);
+    
+    Serial.println(String(delayT));
+    
+    blink();
+
+    return respMsg;
+}
+
+String handleMinDelayGet(){
+  
+  String respMsg = String(mindelaystep);
+  Serial.println("mindelaystep : " + respMsg);
+  blink();
+
+  return respMsg;
+}
+
+String handleProgressiveSpeedSet(String req){
+  
+    String auxS = req.substring(19); // to do : check
+    String posString = auxS.substring(0, auxS.indexOf(" "));
+    int pSpeed = posString.toInt();
+
+    if(pSpeed >=1)
+    {
+      useprogressivespeed = true;
+    }
+    else
+    {
+      useprogressivespeed = false;
+    }
+
+    useprogressivespeed = pSpeed;
+
+    String respMsg = String(pSpeed);
+    
+    Serial.println(String(pSpeed));
+    
+    blink();
+
+    return respMsg;
+}
+
+String handleProgressiveSpeedGet(){
+  
+  String respMsg = String(useprogressivespeed);
+  Serial.println("useprogressivespeed : " + respMsg);
+  blink();
+
+  return respMsg;
+}
+
+String handleMinDelaySet(String req){
+  
+    String auxD = req.substring(19);  // to do : check
+    String posString = auxD.substring(0, auxD.indexOf(" "));
+    int delayT = posString.toInt();
+
+    mindelaystep = delayT;
+
+    String respMsg = String(delayT);
+    
+    Serial.println(String(delayT));
+    
     blink();
 
     return respMsg;
@@ -381,52 +490,52 @@ void blink() {
 
 int getStepDelay(int step, int total){
  
-  int delayT = DELAYSTEP;
+  int delayT = delaystep;
 
-  if(USEPROGRESSIVESPEED == false){
+  if(useprogressivespeed == false){
     return delayT;
   }
 
   if(total - step >= STEPSPERCIRCLE){
-    delayT = MINDELAYSTEP;
+    delayT = mindelaystep;
   }
   else  
   if(step < STEPSPERCIRCLE){
-    delayT = DELAYSTEP * 2;
+    delayT = delaystep * 2;
   }
   else
   if(step < STEPSPERCIRCLE / 2){
-    delayT = DELAYSTEP * 4;
+    delayT = delaystep * 4;
   }
   else
   if(step < STEPSPERCIRCLE / 4){
-    delayT = DELAYSTEP * 6;
+    delayT = delaystep * 6;
   }  
   else
   if(step < STEPSPERCIRCLE / 8){
-    delayT = DELAYSTEP * 8;
+    delayT = delaystep * 8;
   }    
   if(step < STEPSPERCIRCLE / 16){
-    delayT = DELAYSTEP * 10;
+    delayT = delaystep * 10;
   }
   else  
   if(total - step < STEPSPERCIRCLE){
-    delayT = DELAYSTEP * 2;
+    delayT = delaystep * 2;
   }
   else
   if(total - step < STEPSPERCIRCLE / 2){
-    delayT = DELAYSTEP * 4;
+    delayT = delaystep * 4;
   }
   else
   if(total - step < STEPSPERCIRCLE / 4){
-    delayT = DELAYSTEP * 6;
+    delayT = delaystep * 6;
   }  
   else
   if(total - step < STEPSPERCIRCLE / 8){
-    delayT = DELAYSTEP * 8;
+    delayT = delaystep * 8;
   }    
   if(total - step < STEPSPERCIRCLE / 16){
-    delayT = DELAYSTEP * 10;
+    delayT = delaystep * 10;
   }  
 
   return delayT;
@@ -442,11 +551,11 @@ int moveLeft(int steps){
   Serial.println("Moving left : " + String(steps));
   
   digitalWrite(DIR, LOW);
-  delayMicroseconds(DELAYSTEP);
+  delayMicroseconds(delaystep);
 
   int total = steps * STEPS_DIVIDER;
   int i=1;
-  int delayT = DELAYSTEP;
+  int delayT = delaystep;
   
   for(i=1; i <= total; i++){
 
@@ -481,11 +590,11 @@ int moveRight(int steps){
   Serial.println("Moving right : " + String(steps));
 
   digitalWrite(DIR, HIGH);
-  delayMicroseconds(DELAYSTEP);
+  delayMicroseconds(delaystep);
 
   int total = steps * STEPS_DIVIDER;
   int i=1;
-  int delayT = DELAYSTEP;
+  int delayT = delaystep;
   
   for(i=1; i<= total; i++){
 
